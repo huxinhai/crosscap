@@ -1,0 +1,64 @@
+name: build-release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os_name: darwin
+            runner: macos-14
+            node_arch: arm64
+            artifact_name: crosscap-darwin-arm64
+            archive_cmd: tar -czf crosscap-darwin-arm64.tar.gz -C release package
+            archive_path: crosscap-darwin-arm64.tar.gz
+            run_smoke: true
+          - os_name: darwin
+            runner: macos-15-intel
+            node_arch: x64
+            artifact_name: crosscap-darwin-x64
+            archive_cmd: tar -czf crosscap-darwin-x64.tar.gz -C release package
+            archive_path: crosscap-darwin-x64.tar.gz
+            run_smoke: true
+          - os_name: win32
+            runner: windows-2025
+            node_arch: x64
+            artifact_name: crosscap-win32-x64
+            archive_cmd: powershell -Command "Compress-Archive -Path release\\package\\* -DestinationPath crosscap-win32-x64.zip"
+            archive_path: crosscap-win32-x64.zip
+            run_smoke: false
+
+    runs-on: ${{ matrix.runner }}
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 23
+          architecture: ${{ matrix.node_arch }}
+
+      - run: npm install -g pnpm@10
+      - run: pnpm --version
+      - run: pnpm install --frozen-lockfile
+
+      - if: ${{ matrix.run_smoke }}
+        run: pnpm run test:smoke
+
+      - run: pnpm run package:release
+      - run: ${{ matrix.archive_cmd }}
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.archive_path }}
+          retention-days: 7
