@@ -27,9 +27,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 23
-          cache: pnpm
-      - run: corepack enable
-      - run: corepack prepare pnpm@10 --activate
+      - run: npm install -g pnpm@10
+      - run: pnpm --version
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test:smoke
       - run: pnpm run package:release
