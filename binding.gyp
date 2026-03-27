@@ -86,7 +86,7 @@
                 "/DEBUG:NONE"
               ],
               "GenerateDebugInformation": "false",
-              "ModuleDefinitionFile": "native\\common\\crosscap.def"
+              "ModuleDefinitionFile": "..\\native\\common\\crosscap.def"
             }
           },
           "msvs_disabled_warnings": [
