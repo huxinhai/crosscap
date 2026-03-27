@@ -1,0 +1,41 @@
+{
+  "name": "crosscap",
+  "version": "0.1.0",
+  "description": "Native screenshot module for Electron.",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "prebuilds"
+  ],
+  "scripts": {
+    "build": "pnpm run build:ts && pnpm run build:native",
+    "build:ts": "tsup src/index.ts --format cjs --dts --clean --minify",
+    "build:native": "rm -rf build/node_gyp_bins && node-gyp rebuild",
+    "dev": "pnpm run build",
+    "clean": "rm -rf dist build release prebuilds",
+    "diagnose:sckit": "pnpm run build && node scripts/diagnose-screencapturekit.mjs",
+    "package:release": "pnpm run build && node scripts/package-release.mjs",
+    "test:memory": "pnpm run build && node scripts/memory-smoke.mjs",
+    "test:smoke": "pnpm run build && node scripts/smoke.mjs",
+    "prepack": "pnpm run build"
+  },
+  "dependencies": {
+    "node-addon-api": "^8.3.1",
+    "node-gyp-build": "^4.8.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "node-gyp": "^11.4.2",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  }
+}
