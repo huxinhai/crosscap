@@ -26,6 +26,11 @@ const nativeSource = path.join(root, "build", "Release", "crosscap.node");
 const nativeTarget = path.join(prebuildRoot, "crosscap.node");
 fs.copyFileSync(nativeSource, nativeTarget);
 
+const pdbSource = path.join(root, "build", "Release", "crosscap.pdb");
+if (process.platform === "win32" && fs.existsSync(pdbSource)) {
+  console.log("[crosscap] skip pdb for release package");
+}
+
 if (process.platform === "darwin") {
   try {
     execFileSync("strip", ["-x", "-S", nativeTarget], { stdio: "inherit" });
@@ -52,7 +57,7 @@ const publishPkg = {
     },
   },
   dependencies: sourcePkg.dependencies,
-  os: ["darwin"],
+  os: [process.platform],
   cpu: [process.arch],
   files: ["dist", "prebuilds"],
 };

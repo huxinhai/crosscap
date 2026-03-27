@@ -1,0 +1,28 @@
+name: build-windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-2025
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 23
+      - run: npm install -g pnpm@10
+      - run: pnpm --version
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run package:release
+      - run: powershell -Command "Compress-Archive -Path release\\package\\* -DestinationPath crosscap-win32-x64.zip"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: crosscap-win32-x64
+          path: crosscap-win32-x64.zip
