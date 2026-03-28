@@ -22,6 +22,7 @@ capture(options?: CaptureOptions): Promise<CaptureResult>
 captureBitmap(options?: CaptureBitmapOptions): Promise<BitmapResult>
 captureRegion(options: CaptureRegionOptions): Promise<CaptureResult>
 getPermissionStatus(): Promise<PermissionStatus>
+requestPermission(): Promise<PermissionStatus>
 openSystemSettings(): Promise<void>
 ```
 
@@ -30,6 +31,7 @@ openSystemSettings(): Promise<void>
 - `capture()` 返回编码后的图片 `Buffer`
 - `captureBitmap()` 返回 raw `BGRA` 像素 `Buffer`
 - `captureRegion()` 返回区域截图的图片 `Buffer`
+- `requestPermission()` 会在 macOS 上尝试触发系统授权弹窗
 
 ## 工程结构
 
@@ -146,12 +148,13 @@ release/package/
 
 GitHub Actions 工作流在：
 
-- [.github/workflows/build-macos.yml](/Users/mac/html/crosscap/.github/workflows/build-macos.yml)
+- [.github/workflows/build-release.yml](/Users/mac/html/crosscap/.github/workflows/build-release.yml)
 
 当前会分别构建：
 
 - `darwin-arm64`
 - `darwin-x64`
+- `win32-x64`
 
 并上传对应 artifact。
 
@@ -188,7 +191,7 @@ const output = await sharp(bitmap.data, {
 
 ## 权限
 
-macOS 截图需要 Screen Recording 权限。
+macOS 截图需要“录屏与系统录音”权限。
 
 可以先查询：
 
@@ -196,11 +199,54 @@ macOS 截图需要 Screen Recording 权限。
 await crosscap.getPermissionStatus();
 ```
 
+首次未授权时可以尝试主动请求：
+
+```ts
+await crosscap.requestPermission();
+```
+
 未授权时可以引导用户打开系统设置：
 
 ```ts
 await crosscap.openSystemSettings();
 ```
+
+推荐流程：
+
+```ts
+const status = await crosscap.getPermissionStatus();
+
+if (status.screenRecording !== "granted") {
+  const requested = await crosscap.requestPermission();
+
+  if (requested.screenRecording !== "granted") {
+    await crosscap.openSystemSettings();
+  }
+}
+```
+
+说明：
+
+- macOS 首次调用 `requestPermission()` 时，通常会出现系统授权弹窗
+- 如果用户之前已经明确拒绝过，系统通常不会反复弹窗，此时应直接引导到系统设置
+- Windows 当前实现不需要额外权限弹窗，`requestPermission()` 会直接返回 `granted`
+
+## Windows 说明
+
+当前 Windows 版本基于 `GDI + WIC`，适合作为首版发布实现。
+
+当前行为：
+
+- 不需要像 macOS 那样申请“录屏与系统录音”权限
+- `getPermissionStatus()` / `requestPermission()` 当前返回 `granted`
+- 支持显示器枚举、整屏截图、区域截图、bitmap 输出、多格式编码
+
+已知限制：
+
+- 无法保证截取到 UAC 安全桌面等高权限隔离界面
+- 某些受保护内容窗口可能返回黑屏或空内容
+- CI / 无交互桌面会话中，真实截图结果可能不稳定
+- 当前优先保证稳定发布，后续如需更强能力可升级到 `Windows Graphics Capture`
 
 ## 最新 API 策略
 
@@ -284,11 +330,11 @@ captureRegion({
 
 - 本地开发和 Electron 集成
 - GitHub Actions 打包
-- `arm64` 发布包生成
-- 后续扩展 Intel / Windows
+- `macOS arm64/x64` 与 `Windows x64` 发布包生成
+- 后续继续增强 Windows 能力
 
 下一阶段重点：
 
 1. 继续稳定 `ScreenCaptureKit` 最新 API 分支
-2. 完成双架构发布验证
-3. 增加 Windows 实现
+2. 完善 Windows 冒烟测试分层
+3. 继续收紧发布体积和错误诊断

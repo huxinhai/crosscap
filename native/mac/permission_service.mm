@@ -10,7 +10,20 @@ namespace crosscap {
 PermissionState GetPermissionStatus() {
   if (@available(macOS 10.15, *)) {
     return CGPreflightScreenCaptureAccess() ? PermissionState::kGranted
-                                            : PermissionState::kUnknown;
+                                            : PermissionState::kNotDetermined;
+  }
+
+  return PermissionState::kGranted;
+}
+
+PermissionState RequestPermission() {
+  if (@available(macOS 10.15, *)) {
+    if (CGPreflightScreenCaptureAccess()) {
+      return PermissionState::kGranted;
+    }
+
+    return CGRequestScreenCaptureAccess() ? PermissionState::kGranted
+                                          : PermissionState::kDenied;
   }
 
   return PermissionState::kGranted;

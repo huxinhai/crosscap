@@ -5,6 +5,7 @@
 namespace crosscap {
 
 PermissionState GetPermissionStatus();
+PermissionState RequestPermission();
 void EnsureCapturePermission();
 void OpenSystemSettings();
 

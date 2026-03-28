@@ -294,6 +294,33 @@ Napi::Value GetPermissionStatusWrapped(const Napi::CallbackInfo& info) {
   return deferred.Promise();
 }
 
+Napi::Value RequestPermissionWrapped(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
+
+  const crosscap::PermissionState state = crosscap::RequestPermission();
+  Napi::Object result = Napi::Object::New(env);
+
+  switch (state) {
+    case crosscap::PermissionState::kGranted:
+      result.Set("screenRecording", "granted");
+      break;
+    case crosscap::PermissionState::kDenied:
+      result.Set("screenRecording", "denied");
+      break;
+    case crosscap::PermissionState::kNotDetermined:
+      result.Set("screenRecording", "not-determined");
+      break;
+    case crosscap::PermissionState::kUnknown:
+    default:
+      result.Set("screenRecording", "unknown");
+      break;
+  }
+
+  deferred.Resolve(result);
+  return deferred.Promise();
+}
+
 Napi::Value OpenSystemSettingsWrapped(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
   Napi::Promise::Deferred deferred = Napi::Promise::Deferred::New(env);
@@ -317,6 +344,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
               Napi::Function::New(env, CaptureRegionWrapped));
   exports.Set("getPermissionStatus",
               Napi::Function::New(env, GetPermissionStatusWrapped));
+  exports.Set("requestPermission",
+              Napi::Function::New(env, RequestPermissionWrapped));
   exports.Set("openSystemSettings",
               Napi::Function::New(env, OpenSystemSettingsWrapped));
   return exports;

@@ -37,6 +37,10 @@ export function getPermissionStatus() {
   return binding.getPermissionStatus();
 }
 
+export function requestPermission() {
+  return binding.requestPermission();
+}
+
 export function openSystemSettings() {
   return binding.openSystemSettings();
 }

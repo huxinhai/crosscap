@@ -15,6 +15,7 @@ export type NativeBinding = {
     options: import("./types").CaptureRegionOptions,
   ) => Promise<import("./types").CaptureResult>;
   getPermissionStatus: () => Promise<import("./types").PermissionStatus>;
+  requestPermission: () => Promise<import("./types").PermissionStatus>;
   openSystemSettings: () => Promise<void>;
 };
 
